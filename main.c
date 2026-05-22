@@ -103,20 +103,22 @@ int main (){
     while(!WindowShouldClose()){
         time = GetFrameTime();
 
-        ClearBackground(RAYWHITE);
-        BeginMode2D(camera);
-        DrawTexture(backgroud,0,0,WHITE);
-        # pragma region movement
         moveShip(time);
-        # pragma endregion
 
-        DrawTexture(spaceShip, gameData.playersPosition.x, gameData.playersPosition.y,WHITE);
-        #ifdef SHOW_FRAME
-        fps = GetFPS();
-        sprintf(fpsC,"%.2f",fps);
-        DrawText(fpsC,10, 10, 50, WHITE);
-        #endif
+        # pragma region drawing
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+            BeginMode2D(camera);
+            DrawTexture(backgroud,0,0,WHITE);
+            DrawTexture(spaceShip, gameData.playersPosition.x, gameData.playersPosition.y,WHITE);
+            #ifdef SHOW_FRAME
+            fps = GetFPS();
+            sprintf(fpsC,"%.2f",fps);
+            DrawText(fpsC,10, 10, 50, WHITE);
+            #endif
         EndDrawing();
+        # pragma endregion
     }
+    CloseWindow();
     return 0;
 }
