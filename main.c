@@ -11,6 +11,28 @@ typedef struct TiledRenderer{
     Texture2D texture;
 }TiledRenderer;
 
+void TiledRenderer_render(TiledRenderer* tiledRenderer,Camera2D* camera){
+
+	Vector2 origin = {0.0f,0.0f};
+	Rectangle src = {0,0,tiledRenderer->backgroundSize,tiledRenderer->backgroundSize};
+
+    Vector2 viewRect = camera->target;
+    for (int y = -1; y <= 1; y++)
+	{
+		for (int x = -1; x <= 1; x++)
+		{
+			float posX = x + viewRect.x / tiledRenderer->backgroundSize;
+			float posY = y + viewRect.y / tiledRenderer->backgroundSize;
+			Rectangle source = {posX,posY,tiledRenderer->texture.width,tiledRenderer->texture.height};
+            DrawTexturePro(tiledRenderer->texture,source,source,origin,0.0f,WHITE);
+		}
+	}
+    DrawTexturePro(tiledRenderer->texture,src,src,origin,0.0f,WHITE);
+}
+
+TiledRenderer tiledRenderer ={
+    .backgroundSize = 10000
+};
 
 
 
@@ -26,14 +48,16 @@ GameData gameData = {
 
 // textures
 Texture2D spaceShip;
-Texture2D backgroud;
+Texture2D background;
 
 // camera
 Camera2D camera = {0};
 
 bool init_game(){
     spaceShip = LoadTexture(RESOUCE_PATH"/spaceShip/ships/green.png");
-    backgroud = LoadTexture(RESOUCE_PATH"/background1.png");
+    background = LoadTexture(RESOUCE_PATH"/background1.png");
+    TraceLog(LOG_INFO,"Background size width:%d height:%d",background.width,background.height);
+    tiledRenderer.texture = background;
     return true;
 }
 
@@ -63,8 +87,8 @@ void moveShip(float deltaTime){
     }
     if (move.x != 0 || move.y!=0){
         move = normalize(move);
-        move.x *=  deltaTime * 200;
-        move.y *=  deltaTime * 200;
+        move.x *=  deltaTime * 1000;
+        move.y *=  deltaTime * 1000;
         gameData.playersPosition.x += move.x;
         gameData.playersPosition.y += move.y;
     }
@@ -76,7 +100,7 @@ void attachCameraToPlayer(Vector2 vector,float sWidth,float sHight){
     camera.target = (Vector2){vector.x,vector.y};
     camera.offset = (Vector2){sWidth/2.0f,sHight/2.0f};
     camera.rotation = 0.0f;
-    camera.zoom = 1.0f;
+    camera.zoom = 0.5f;
 }
 
 bool clear_game(){
@@ -86,6 +110,7 @@ bool clear_game(){
 int main (){
     TraceLog(LOG_INFO, "Hello Space Game");
     InitWindow(900,600 , "First Raylib window");
+    SetTargetFPS(60);
     TraceLog(LOG_INFO, "Resouce Path |%s|", RESOUCE_PATH);
     bool game_started = init_game();
     if (game_started == false){
@@ -109,7 +134,8 @@ int main (){
         BeginDrawing();
             ClearBackground(RAYWHITE);
             BeginMode2D(camera);
-            DrawTexture(backgroud,0,0,WHITE);
+            // DrawTexture(backgroud,0,0,WHITE);
+            TiledRenderer_render(&tiledRenderer,&camera);
             DrawTexture(spaceShip, gameData.playersPosition.x, gameData.playersPosition.y,WHITE);
             #ifdef SHOW_FRAME
             fps = GetFPS();
