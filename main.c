@@ -1,9 +1,29 @@
+# include <inttypes.h>
 # include <stdio.h>
 # include <stdbool.h>
 # include <raylib.h>
+# include <stdlib.h>
+# include <string.h>
 # include <unistd.h>
 # include <math.h>
+
 # define RESOUCE_PATH "assets"
+
+# define BACKGROUND 3
+
+void DisplaySystemMessage(char *message) {
+
+    if (strlen(message) > 50) {
+        return;
+    }
+    char messagef[50];
+    // try xmessage
+    sprintf(messagef, "xmessage -center '%s'", message);
+    int result =  system(messagef);
+    if (result == 0 ){
+        return;
+    }
+}
 
 // tiled renderer
 typedef struct TiledRenderer{
@@ -30,10 +50,11 @@ void TiledRenderer_render(TiledRenderer* tiledRenderer,Camera2D* camera){
     DrawTexturePro(tiledRenderer->texture,src,src,origin,0.0f,WHITE);
 }
 
-TiledRenderer tiledRenderer ={
-    .backgroundSize = 10000
+TiledRenderer tiledRenderer [BACKGROUND] ={
+    {.backgroundSize = 10000},
+    {.backgroundSize = 10000},
+    {.backgroundSize = 10000},
 };
-
 
 
 // Game data
@@ -45,19 +66,48 @@ GameData gameData = {
     .playersPosition={100,100}
 };
 
+// Game Options
+typedef struct GameOption{
+    Vector2 ScreenSize;
+}GameOption;
+
+GameOption gameOption ={
+    .ScreenSize={0,0}
+};
 
 // textures
 Texture2D spaceShip;
-Texture2D background;
+Texture2D background[BACKGROUND];
 
 // camera
 Camera2D camera = {0};
 
 bool init_game(){
     spaceShip = LoadTexture(RESOUCE_PATH"/spaceShip/ships/green.png");
-    background = LoadTexture(RESOUCE_PATH"/background1.png");
-    TraceLog(LOG_INFO,"Background size width:%d height:%d",background.width,background.height);
-    tiledRenderer.texture = background;
+    if (spaceShip.id <=0){
+        return false;
+    }
+
+    background[0] = LoadTexture(RESOUCE_PATH"/background1.png");
+    if (background[0].id <=0){
+        return false;
+    }
+    tiledRenderer[0].texture = background[0];
+
+
+    background[1] = LoadTexture(RESOUCE_PATH"/background2.png");
+    if (background[1].id <=0){
+        return false;
+    }
+    tiledRenderer[1].texture = background[1];
+
+    background[2] = LoadTexture(RESOUCE_PATH"/background3.png");
+    if (background[2].id <=0){
+        return false;
+    }
+    tiledRenderer[2].texture = background[2];
+
+    TraceLog(LOG_INFO,"Background size width:%d height:%d",background[0].width,background[0].height);
     return true;
 }
 
@@ -82,6 +132,7 @@ void moveShip(float deltaTime){
     if (IsKeyDown(KEY_RIGHT)||IsKeyDown(KEY_D)){
         move.x++;
     }
+    // move Left
     if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)){
         move.x--;
     }
@@ -109,15 +160,14 @@ bool clear_game(){
 
 int main (){
     TraceLog(LOG_INFO, "Hello Space Game");
-    InitWindow(900,600 , "First Raylib window");
+    InitWindow(gameOption.ScreenSize.x,gameOption.ScreenSize.y , "First Raylib window");
     SetTargetFPS(60);
     TraceLog(LOG_INFO, "Resouce Path |%s|", RESOUCE_PATH);
     bool game_started = init_game();
     if (game_started == false){
-
+        DisplaySystemMessage("Failed to load assets");
         TraceLog(LOG_FATAL, "Failed Init the Game");
-        // TODO add message box in here to show to the user
-        return 0;
+        return 1;
     }
     float time;
     #ifdef SHOWFRAME
@@ -135,7 +185,9 @@ int main (){
             ClearBackground(RAYWHITE);
             BeginMode2D(camera);
             // DrawTexture(backgroud,0,0,WHITE);
-            TiledRenderer_render(&tiledRenderer,&camera);
+            for (int i = 0;i<BACKGROUND;i++){
+                TiledRenderer_render(&tiledRenderer[i],&camera);
+            }
             DrawTexture(spaceShip, gameData.playersPosition.x, gameData.playersPosition.y,WHITE);
             #ifdef SHOW_FRAME
             fps = GetFPS();
